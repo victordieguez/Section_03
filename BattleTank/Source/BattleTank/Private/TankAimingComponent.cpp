@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TankAimingComponent.h"
+#include "TankBarrel.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values for this component's properties
 UTankAimingComponent::UTankAimingComponent() {
@@ -8,7 +10,6 @@ UTankAimingComponent::UTankAimingComponent() {
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 }
-
 
 // Called when the game starts
 void UTankAimingComponent::BeginPlay() {
@@ -20,6 +21,33 @@ void UTankAimingComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UTankAimingComponent::AimAt(FVector HitLocation) {
-	UE_LOG(LogTemp, Warning, TEXT("%s Aiming at location: %s"), *GetOwner()->GetName(), *HitLocation.ToString());
+void UTankAimingComponent::AimAt(FVector HitLocation, float LaunchSpeed) {
+	if (Barrel) {
+		FVector TossVelocity;
+		if (UGameplayStatics::SuggestProjectileVelocity(this, TossVelocity, Barrel->GetSocketLocation(FName("Projectile")), HitLocation, LaunchSpeed, false, 0, 0, ESuggestProjVelocityTraceOption::DoNotTrace)) {
+			FVector AimDirection = TossVelocity.GetSafeNormal();
+			UE_LOG(LogTemp, Warning, TEXT("%s Aiming direction: %s"), *GetOwner()->GetName(), *AimDirection.ToString());
+			MoveBarrelTo(AimDirection);
+		} else {
+			UE_LOG(LogTemp, Warning, TEXT("%f Aiming direction not found"), GetWorld()->GetTimeSeconds());
+		}
+	}
+}
+
+void UTankAimingComponent::SetBarrel(UTankBarrel* Barrel) {
+	this->Barrel = Barrel;
+}
+
+void UTankAimingComponent::SetTurret(UStaticMeshComponent* Turret) {
+	this->Turret = Turret;
+}
+
+void UTankAimingComponent::MoveBarrelTo(FVector AimDirection) {
+	if (Barrel) {
+		FRotator BarrelRotator = Barrel->GetForwardVector().Rotation();
+		FRotator AimRotator = AimDirection.Rotation();
+		FRotator DeltaRotator = AimRotator - BarrelRotator;
+
+		Barrel->Elevate(5);
+	}
 }
