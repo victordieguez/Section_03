@@ -6,8 +6,12 @@
 #include "GameFramework/Pawn.h"
 #include "Tank.generated.h"
 
-class UTankBarrel; //Forward declaration
-class UTankAimingComponent; //Forward declaration
+/// Forward declarations
+class UTankBarrel;
+class UTankTurret;
+class UTankTrack;
+class UTankAimingComponent;
+class AProjectile;
 
 UCLASS()
 class BATTLETANK_API ATank : public APawn {
@@ -23,19 +27,37 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	void AimAt(FVector HitLocation);
-
 	UFUNCTION(BlueprintCallable, Category = Setup)
 	void SetBarrel(UTankBarrel* Barrel);
 
 	UFUNCTION(BlueprintCallable, Category = Setup)
-	void SetTurret(UStaticMeshComponent* Turret);
+	void SetTurret(UTankTurret* Turret);
+
+	UFUNCTION(BlueprintCallable, Category = Setup)
+	void SetRightTrack(UTankTrack* Track);
+
+	UFUNCTION(BlueprintCallable, Category = Setup)
+	void SetLeftTrack(UTankTrack* Track);
+
+	void AimAt(FVector HitLocation);
+
+	UFUNCTION(BlueprintCallable, Category = Firing)
+	void Fire();
 
 protected:
 	UTankAimingComponent* TankAimingComponent = nullptr;
 
 private:
-	UPROPERTY(EditAnywhere, Category = Firing)
-	float LaunchSpeed = 100000; //1000m/s
+	UPROPERTY(EditDefaultsOnly, Category = Setup)
+	TSubclassOf<AProjectile> ProjectileBP = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category = Firing)
+	float LaunchSpeed = 5000; //50m/s
+	UPROPERTY(EditDefaultsOnly, Category = Firing)
+	float ReloadTimeInSeconds = 3;
 
+	UTankBarrel* Barrel = nullptr;
+	UTankTrack* RightTrack = nullptr;
+	UTankTrack* LeftTrack = nullptr;
+
+	double LastFireTime = 0;
 };

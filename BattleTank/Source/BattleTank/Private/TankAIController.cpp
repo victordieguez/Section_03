@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Tank.h"
 #include "TankAIController.h"
+#include "Tank.h"
 #include "Engine/World.h"
 
 // Called when the game starts or when spawned
@@ -25,6 +25,7 @@ void ATankAIController::Tick(float DeltaTime) {
 	ATank* PlayerTank = GetPlayerTank();
 	if (ControlledTank && PlayerTank) {
 		ControlledTank->AimAt(PlayerTank->GetActorLocation());
+		ControlledTank->Fire();
 	}
 }
 
