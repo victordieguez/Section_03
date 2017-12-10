@@ -2,6 +2,7 @@
 
 #include "Tank.h"
 #include "TankAimingComponent.h"
+#include "TankMovementComponent.h"
 #include "TankBarrel.h"
 #include "Projectile.h"
 #include "Engine/World.h"
@@ -34,14 +35,6 @@ void ATank::SetTurret(UTankTurret* Turret) {
 	if (TankAimingComponent) {
 		TankAimingComponent->SetTurret(Turret);
 	}
-}
-
-void ATank::SetRightTrack(UTankTrack* Track) {
-	this->RightTrack = Track;
-}
-
-void ATank::SetLeftTrack(UTankTrack* Track) {
-	this->LeftTrack = Track;
 }
 
 void ATank::AimAt(FVector HitLocation) {

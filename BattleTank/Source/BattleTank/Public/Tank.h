@@ -9,8 +9,8 @@
 /// Forward declarations
 class UTankBarrel;
 class UTankTurret;
-class UTankTrack;
 class UTankAimingComponent;
+class UTankMovementComponent;
 class AProjectile;
 
 UCLASS()
@@ -33,12 +33,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Setup)
 	void SetTurret(UTankTurret* Turret);
 
-	UFUNCTION(BlueprintCallable, Category = Setup)
-	void SetRightTrack(UTankTrack* Track);
-
-	UFUNCTION(BlueprintCallable, Category = Setup)
-	void SetLeftTrack(UTankTrack* Track);
-
 	void AimAt(FVector HitLocation);
 
 	UFUNCTION(BlueprintCallable, Category = Firing)
@@ -46,6 +40,9 @@ public:
 
 protected:
 	UTankAimingComponent* TankAimingComponent = nullptr;
+
+	UPROPERTY(BlueprintReadOnly)
+	UTankMovementComponent* TankMovementComponent = nullptr;
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = Setup)
@@ -56,8 +53,6 @@ private:
 	float ReloadTimeInSeconds = 3;
 
 	UTankBarrel* Barrel = nullptr;
-	UTankTrack* RightTrack = nullptr;
-	UTankTrack* LeftTrack = nullptr;
 
 	double LastFireTime = 0;
 };
