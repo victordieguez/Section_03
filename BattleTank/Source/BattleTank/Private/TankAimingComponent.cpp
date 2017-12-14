@@ -13,15 +13,19 @@ UTankAimingComponent::UTankAimingComponent() {
 
 void UTankAimingComponent::BeginPlay() {
 	Super::BeginPlay();
-	LastFireTime = FPlatformTime::Seconds();
+	LastFireTime = GetWorld()->GetTimeSeconds();
 }
 
 void UTankAimingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction * ThisTickFunction) {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if ((FPlatformTime::Seconds() - LastFireTime) > ReloadTimeInSeconds) {
-		FiringState = EFiringState::Locked;
-	} else {
+	if (RoundsLeft <= 0) {
+		FiringState = EFiringState::OutOfAmmo;
+	} else if ((GetWorld()->GetTimeSeconds() - LastFireTime) < ReloadTimeInSeconds) {
 		FiringState = EFiringState::Reloading;
+	} else if (IsBarrelMoving()) {
+		FiringState = EFiringState::Aiming;
+	} else {
+		FiringState = EFiringState::Locked;
 	}
 }
 
@@ -34,7 +38,7 @@ void UTankAimingComponent::AimAt(FVector HitLocation) {
 	if (ensure(Barrel) && ensure(Turret)) {
 		FVector TossVelocity;
 		if (UGameplayStatics::SuggestProjectileVelocity(this, TossVelocity, Barrel->GetSocketLocation(FName("Projectile")), HitLocation, LaunchSpeed, false, 0, 0, ESuggestProjVelocityTraceOption::DoNotTrace)) {
-			FVector AimDirection = TossVelocity.GetSafeNormal();
+			AimDirection = TossVelocity.GetSafeNormal();
 			MoveBarrelTo(AimDirection);
 		}
 	}
@@ -42,26 +46,41 @@ void UTankAimingComponent::AimAt(FVector HitLocation) {
 
 void UTankAimingComponent::MoveBarrelTo(FVector AimDirection) {
 	if (ensure(Barrel) && ensure(Turret)) {
-		FRotator AimRotator = AimDirection.Rotation();
-
 		FRotator BarrelRotator = Barrel->GetForwardVector().Rotation();
-		FRotator DeltaRotatorBarrel = AimRotator - BarrelRotator;
-		Barrel->Elevate(DeltaRotatorBarrel.Pitch);
-
-		FRotator TurretRotator = Turret->GetForwardVector().Rotation();
-		FRotator DeltaRotatorTurret = AimRotator - TurretRotator;
-		Turret->Rotate(DeltaRotatorTurret.Yaw);
+		FRotator DeltaRotator = AimDirection.Rotation() - BarrelRotator;
+		Barrel->Elevate(DeltaRotator.Pitch);
+		if (FMath::Abs(DeltaRotator.Yaw) < 180) {
+			Turret->Rotate(DeltaRotator.Yaw);
+		} else {
+			Turret->Rotate(-DeltaRotator.Yaw);
+		}
 	}
 }
 
+bool UTankAimingComponent::IsBarrelMoving() const {
+	if (ensure(Barrel)) {
+		return !AimDirection.Equals(Barrel->GetForwardVector(), 0.01);
+	}
+	return true;
+}
+
 void UTankAimingComponent::Fire() {
-	if (FiringState != EFiringState::Reloading) {
+	if (FiringState == EFiringState::Locked || FiringState == EFiringState::Aiming) {
 		if (ensure(Barrel) && ensure(ProjectileBP)) {
 			AProjectile* Projectile = GetWorld()->SpawnActor<AProjectile>(ProjectileBP, Barrel->GetSocketLocation(FName("Projectile")), Barrel->GetSocketRotation(FName("Projectile")));
 			if (ensure(Projectile)) {
 				Projectile->LaunchProjectile(LaunchSpeed);
-				LastFireTime = FPlatformTime::Seconds();
+				LastFireTime = GetWorld()->GetTimeSeconds();
+				RoundsLeft--;
 			}
 		}
 	}
+}
+
+EFiringState UTankAimingComponent::GetFiringState() const {
+	return FiringState;
+}
+
+int UTankAimingComponent::GetRoundsLeft() const {
+	return RoundsLeft;
 }

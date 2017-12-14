@@ -17,8 +17,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-private:
+protected:
 
-	float AcceptanceRadius = 3;
+	UPROPERTY(EditDefaultsOnly, Category = "Setup")
+	float AcceptanceRadius = 80000; //80m
 
 };
