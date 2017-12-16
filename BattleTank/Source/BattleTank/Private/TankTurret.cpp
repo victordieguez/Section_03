@@ -4,6 +4,8 @@
 #include "Engine/World.h"
 
 void UTankTurret::Rotate(float RelativeSpeed) {
-	auto RotationChange = FMath::Clamp<float>(RelativeSpeed, -1, 1) * MaxDegreesPerSecond * GetWorld()->DeltaTimeSeconds;
-	SetRelativeRotation(FRotator(0, RelativeRotation.Yaw + RotationChange, 0));
+	if (ensure(GetWorld())) {
+		auto RotationChange = FMath::Clamp<float>(RelativeSpeed, -1, 1) * MaxDegreesPerSecond * GetWorld()->DeltaTimeSeconds;
+		SetRelativeRotation(FRotator(0, RelativeRotation.Yaw + RotationChange, 0));
+	}
 }

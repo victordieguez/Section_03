@@ -23,24 +23,28 @@ void UTankTrack::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UP
 }
 
 void UTankTrack::DriveTrack() {
-	UPrimitiveComponent* TankRoot = Cast<UPrimitiveComponent>(GetOwner()->GetRootComponent());
-	if (ensure(TankRoot)) {
-		auto ForceApplied = GetForwardVector() * CurrentThrottle * TrackMaxDrivingForce;
-		auto ForceLocation = GetComponentLocation();
-		TankRoot->AddForceAtLocation(ForceApplied, ForceLocation);
+	if (ensure(GetOwner())) {
+		UPrimitiveComponent* TankRoot = Cast<UPrimitiveComponent>(GetOwner()->GetRootComponent());
+		if (ensure(TankRoot)) {
+			auto ForceApplied = GetForwardVector() * CurrentThrottle * TrackMaxDrivingForce;
+			auto ForceLocation = GetComponentLocation();
+			TankRoot->AddForceAtLocation(ForceApplied, ForceLocation);
+		}
 	}
 }
 
 void UTankTrack::ApplySidewaysForce() {
-	// Speed on the side
-	auto SlippageSpeed = FVector::DotProduct(GetRightVector(), GetComponentVelocity());
-	// Acceleration required this frame to correct:
-	auto DeltaTime = GetWorld()->GetDeltaSeconds();
-	auto CorrectionAcceleration = -SlippageSpeed / DeltaTime * GetRightVector();
-	// Calculate and aply sideways force:
-	auto TankRoot = Cast<UStaticMeshComponent>(GetOwner()->GetRootComponent());
-	if (ensure(TankRoot)) {
-		auto CorrectionForce = (TankRoot->GetMass() * CorrectionAcceleration) / 2;
-		TankRoot->AddForce(CorrectionForce);
+	if (ensure(GetWorld()) && ensure(GetOwner())) {
+		// Speed on the side
+		auto SlippageSpeed = FVector::DotProduct(GetRightVector(), GetComponentVelocity());
+		// Acceleration required this frame to correct:
+		auto DeltaTime = GetWorld()->GetDeltaSeconds();
+		auto CorrectionAcceleration = -SlippageSpeed / DeltaTime * GetRightVector();
+		// Calculate and aply sideways force:
+		auto TankRoot = Cast<UStaticMeshComponent>(GetOwner()->GetRootComponent());
+		if (ensure(TankRoot)) {
+			auto CorrectionForce = (TankRoot->GetMass() * CorrectionAcceleration) / 2;
+			TankRoot->AddForce(CorrectionForce);
+		}
 	}
 }

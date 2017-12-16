@@ -57,10 +57,11 @@ private:
 	float ReloadTimeInSeconds = 3;
 	UPROPERTY(EditDefaultsOnly, Category = "Firing")
 	float LaunchSpeed = 5000; //50m/s
+	UPROPERTY(EditDefaultsOnly, Category = "Firing")
+	int RoundsLeft = 10;
 
 	UTankTurret* Turret = nullptr;
 	UTankBarrel* Barrel = nullptr;
 	FVector AimDirection;
 	double LastFireTime = 0;
-	int RoundsLeft = 3;
 };

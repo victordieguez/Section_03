@@ -3,13 +3,16 @@
 #include "TankPlayerController.h"
 #include "TankAimingComponent.h"
 #include "Engine/World.h"
+#include "Tank.h"
 
 // Called when the game starts or when spawned
 void ATankPlayerController::BeginPlay() {
 	Super::BeginPlay();
-	UTankAimingComponent* AimingComponent = GetPawn()->FindComponentByClass<UTankAimingComponent>();
-	if (ensure(AimingComponent)) {
-		FoundAimingComponent(AimingComponent);
+	if (GetPawn()) {
+		UTankAimingComponent* AimingComponent = GetPawn()->FindComponentByClass<UTankAimingComponent>();
+		if (ensure(AimingComponent)) {
+			FoundAimingComponent(AimingComponent);
+		}
 	}
 }
 
@@ -20,11 +23,13 @@ void ATankPlayerController::Tick(float DeltaTime) {
 }
 
 void ATankPlayerController::AimTowardsCrossHair() {
-	UTankAimingComponent* AimingComponent = GetPawn()->FindComponentByClass<UTankAimingComponent>();
-	if (ensure(AimingComponent)) {
-		FVector HitLocation;
-		if (GetSightRayHitLocation(HitLocation)) {
-			AimingComponent->AimAt(HitLocation);
+	if (GetPawn()) {
+		UTankAimingComponent* AimingComponent = GetPawn()->FindComponentByClass<UTankAimingComponent>();
+		if (ensure(AimingComponent)) {
+			FVector HitLocation;
+			if (GetSightRayHitLocation(HitLocation)) {
+				AimingComponent->AimAt(HitLocation);
+			}
 		}
 	}
 	return;
@@ -49,10 +54,29 @@ bool ATankPlayerController::GetLookDirection(FVector2D ScreenLocation, FVector& 
 
 bool ATankPlayerController::GetLookVectorHitLocation(FVector LookDirection, FVector& Out_HitLocation) const {
 	FHitResult HitResult;
-	FVector StartLocation = PlayerCameraManager->GetCameraLocation();
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, StartLocation + LookDirection * LineTraceRange, ECollisionChannel::ECC_Visibility)) {
-		Out_HitLocation = HitResult.Location;
-		return true;
+	if (ensure(PlayerCameraManager) && ensure(GetWorld())) {
+		FVector StartLocation = PlayerCameraManager->GetCameraLocation();
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, StartLocation + LookDirection * LineTraceRange, ECollisionChannel::ECC_Camera)) {
+			Out_HitLocation = HitResult.Location;
+			return true;
+		}
 	}
 	return false;
+}
+
+
+void ATankPlayerController::SetPawn(APawn* InPawn) {
+	Super::SetPawn(InPawn);
+	if (ensure(InPawn)) {
+		ATank* PossesedTank = Cast<ATank>(InPawn);
+		if (ensure(PossesedTank)) {
+			///Subscribe to tank's death event:
+			PossesedTank->OnDeath.AddUniqueDynamic(this, &ATankPlayerController::OnTankDeath);
+		}
+	}
+}
+
+void ATankPlayerController::OnTankDeath() {
+	UE_LOG(LogTemp, Warning, TEXT("Player Tank died"));
+	StartSpectatingOnly();
 }
